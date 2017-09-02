@@ -1,0 +1,24 @@
+language: go
+
+go:
+- 1.8.x
+
+environment:
+  global:
+    - CGO_ENABLED=0
+
+script:
+  - go build -tags netgo .
+  - go test -race -coverprofile=coverage.txt -covermode=atomic
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
+deploy:
+  provider: releases
+  api_key:
+    secure: "MVEgmpRyrhnc1eJ1+Qx8BZhZGfUdh+iU/vm4kgnvpDd1EM6X1mGxWIeUa8PIyUhRNsa0mJbpV6mmMXdbswkmccj3dQ/d/W6uqpoCCmYyLvClj7pTBz+u55we44KpEINLHswUMPHfv/gxnIlG8yxxoegbTv1/zuq22Qcvp3AthoFFH6ODv64FSc4SJUwP1DIcC5sYT81nATB7UUyJM5RINVPVRYx6miuQUbvDP5lDKLKQirfi7k4oppwVskXzCwM+x1zvNzJl1iZSSgI98vVMXzVVaNBBpfHmyfSzdRJZ8Gocx/u/1rWEZBSUH6sLGbn4QqrfJGvbmtlEQt9msOFmDHwRoXf4G3S/h1HXoTqMahbXpy7P1Oa9zHtGKblQ9jpqH0yfTWSMWr5IxnZ7V6fA4diFUZ3HNOuL7NQPepTL5LBkBF5v4LVXp6c5pzM+4etngBH2k4MCHVSmb383wTfmUE+kzPLY1bcYQdR7urbB8DVOyRMD+JatrD7YZxhJ3KerUliOA8ndfOMl3WaDkgSctAyocP4EAzGh7mZ7Bn5PUcB5/kiGMkpmm1ZvFOemSITk0HlinnG4p7xHP+ZgILyFx4k6WFmo18y25DCyIffxacIsW8w+fbcv84QVgqKfN/WxhC09H64Y0Qx73ZfrWDPPMmB6wkrt8g2wycoO+WCrLoo="
+  file: ipcheck
+  skip_cleanup: true
+  on:
+    tags: true
