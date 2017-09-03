@@ -15,6 +15,36 @@ var testCases = []struct {
 		"malformed",
 	},
 	{
+		"malformed-short",
+		"123.123.1",
+		"malformed",
+	},
+	{
+		"malformed-long",
+		"123.123.12.41.14",
+		"malformed",
+	},
+	{
+		"malformed-large-number",
+		"123.123.12.256",
+		"malformed",
+	},
+	{
+		"malformed-two-dots",
+		"123..123.1.33",
+		"malformed",
+	},
+	{
+		"malformed-comma",
+		"123.123,1.35",
+		"malformed",
+	},
+	{
+		"malformed-leading-zero",
+		"0.12.42.131",
+		"malformed",
+	},
+	{
 		"public",
 		"132.15.129.2",
 		"public",
