@@ -3,13 +3,9 @@ language: go
 go:
 - 1.9.x
 
-environment:
-  global:
-    - CGO_ENABLED=0
-
 script:
-  - go build -tags netgo .
   - go test -race -coverprofile=coverage.txt -covermode=atomic
+  - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags netgo .
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
