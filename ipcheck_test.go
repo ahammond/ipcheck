@@ -40,11 +40,6 @@ var testCases = []struct {
 		"malformed",
 	},
 	{
-		"malformed-leading-zero",
-		"0.12.42.131",
-		"malformed",
-	},
-	{
 		"public",
 		"132.15.129.2",
 		"public",
