@@ -22,8 +22,14 @@ Usage
 
 In your dockerfile, add something like this:
 ```dockerfile
+FROM alpine
+
 ENV IPCHECK_VERSION="0.1"
-RUN curl -O /usr/local/sbin/ipcheck https://github.com/ahammond/ipcheck/releases/download/v$IPCHECK_VERSION/ipcheck
+
+RUN apk --no-cache add curl  \
+ && curl -o /usr/local/sbin/ipcheck https://github.com/ahammond/ipcheck/releases/download/v$IPCHECK_VERSION/ipcheck
+
+CMD [ "entrypoint.sh" ]
 ```
 
 And then in your entrypoint.sh or wherever you're doing validation:
@@ -31,7 +37,7 @@ And then in your entrypoint.sh or wherever you're doing validation:
 ```bash
 IP_TYPE=$(ipcheck "$MY_IP")
 if [ "public" != "$IP_TYPE" ]; then
-  echo "This IP is no good. I need a public IP and it is $IP_TYPE"
+  echo "I need a public IP, but $MY_IP is $IP_TYPE"
   exit 1
 fi
 ```
