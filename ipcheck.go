@@ -21,6 +21,38 @@ var _, doc198, _ = net.ParseCIDR("198.51.100.0/24")
 var _, doc203, _ = net.ParseCIDR("203.0.113.0/24")
 var _, reserved, _ = net.ParseCIDR("240.0.0.0/4") // https://tools.ietf.org/html/rfc6890
 
+// isPrivate, a missing method for net.IP
+func isPrivate(ip net.IP) bool {
+	switch {
+	case private10.Contains(ip):
+		return true
+	case private100.Contains(ip):
+		return true
+	case private172.Contains(ip):
+		return true
+	case private192.Contains(ip):
+		return true
+	case private198.Contains(ip):
+		return true
+	default:
+		return false
+	}
+}
+
+// isDocumentation, a missing method for net.IP
+func isDocumentation(ip net.IP) bool {
+	switch {
+	case doc192.Contains(ip):
+		return true
+	case doc198.Contains(ip):
+		return true
+	case doc203.Contains(ip):
+		return true
+	default:
+		return false
+	}
+}
+
 // IpCheck takes an IPv4 as as string and returns one of the following types.
 // malformed, public, private, loopback, multicast
 // linklocal, six2four, documentation, reserved
@@ -37,23 +69,11 @@ func IpCheck(s string) string {
 		return "multicast"
 	case linkLocal.Contains(ip):
 		return "linklocal"
-	case private10.Contains(ip):
-		return "private"
-	case private100.Contains(ip):
-		return "private"
-	case private172.Contains(ip):
-		return "private"
-	case private192.Contains(ip):
-		return "private"
-	case private198.Contains(ip):
+	case isPrivate(ip):
 		return "private"
 	case sixToFour.Contains(ip):
 		return "six2four"
-	case doc192.Contains(ip):
-		return "documentation"
-	case doc198.Contains(ip):
-		return "documentation"
-	case doc203.Contains(ip):
+	case isDocumentation(ip):
 		return "documentation"
 	case reserved.Contains(ip):
 		return "reserved"
