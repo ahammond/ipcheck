@@ -24,10 +24,12 @@ In your dockerfile, add something like this:
 ```dockerfile
 FROM alpine
 
-ENV IPCHECK_VERSION="0.1"
+ENV IPCHECK_VERSION="0.2"
+ENV IPCHECK_BIN="/usr/local/bin/ipcheck"
 
-RUN apk --no-cache add curl  \
- && curl -o /usr/local/sbin/ipcheck https://github.com/ahammond/ipcheck/releases/download/v$IPCHECK_VERSION/ipcheck
+RUN apk --no-cache add curl \
+ && curl -Lso $IPCHECK_BIN https://github.com/ahammond/ipcheck/releases/download/v$IPCHECK_VERSION/ipcheck \
+ && chmod a+x $IPCHECK_BIN
 
 CMD [ "entrypoint.sh" ]
 ```
