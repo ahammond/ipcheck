@@ -1,0 +1,56 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.9
+    working_directory: /go/src/github.com/ahammond/ipcheck
+    environment:
+      TEST_RESULTS: /tmp/test-results
+    steps:
+      - checkout
+      - attach_workspace:
+          at: dist
+      - restore_cache:
+          keys:
+            - v1-pkg-cache
+      - run: mkdir -p $TEST_RESULTS
+      - run: go get github.com/jstemmer/go-junit-report
+      - run: go get github.com/mitchellh/gox
+      - run: go get github.com/tcnksm/ghr
+      - run: go get -v -t -d ./...
+      - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic pkg/* 2>&1 | go-junit-report > $TEST_RESULTS/report.xml
+      - run: bash <(curl -s https://codecov.io/bash)
+      - run: gox -os="linux freebsd openbsd" -tags netgo -output "bin/ipcheck_{{.OS}}_{{.Arch}}"
+      - save_cache:
+          key: v1-pkg-cache
+          paths:
+            - "/go/pkg"
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: raw-test-output
+      - store_artifacts:
+          path: bin
+          destination: bin
+      - store_test_results:
+          path: /tmp/test-results
+      - run:
+          name: Upload binaries when tagged
+          command: |
+            # Is there a tag, and does it start with v?
+            if [[ "${CIRCLE_TAG}" =~ ^v[0-9]+\.[0-9]+ ]];
+            then
+              ghr ${CIRCLE_TAG} bin
+            fi
+
+workflows:
+  version: 2
+  workflow:
+    jobs:
+      - build:
+          context: github_public_repo
+          filters:
+            tags:
+              only: /.*/

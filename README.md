@@ -1,7 +1,7 @@
 ipcheck
 ===
 
-[![Build Status](https://travis-ci.org/ahammond/ipcheck.svg?branch=master)](https://travis-ci.org/ahammond/ipcheck)
+[![CircleCI](https://circleci.com/gh/ahammond/ipcheck/tree/master.svg?style=shield)](https://circleci.com/gh/ahammond/ipcheck/tree/master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ahammond/ipcheck)](https://goreportcard.com/report/github.com/ahammond/ipcheck)
 [![codecov](https://codecov.io/gh/ahammond/ipcheck/branch/master/graph/badge.svg)](https://codecov.io/gh/ahammond/ipcheck)
 
