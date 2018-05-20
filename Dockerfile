@@ -1,9 +1,9 @@
 FROM alpine AS build
 
-ENV IPCHECK_VERSION="0.2"
+ARG TAG="v0.3"
 
 RUN apk --no-cache add curl \
- && curl -o ipcheck https://github.com/ahammond/ipcheck/releases/download/v$IPCHECK_VERSION/ipcheck \
+ && curl --output ipcheck --silent --location https://github.com/ahammond/ipcheck/releases/download/${TAG}/ipcheck_linux_amd64 \
  && chmod a+x ipcheck
 
 FROM scratch

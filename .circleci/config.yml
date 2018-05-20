@@ -23,6 +23,7 @@ jobs:
       - run: go get -v -t -d ./...
       - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic pkg/* 2>&1 | go-junit-report > $TEST_RESULTS/report.xml
       - run: bash <(curl -s https://codecov.io/bash)
+      # Skipping on darwin here because... it fails to build and I don't know if anyone cares enough to fix it.
       - run: gox -os="linux freebsd openbsd" -tags netgo -output "bin/ipcheck_{{.OS}}_{{.Arch}}"
       - save_cache:
           key: v1-pkg-cache
@@ -44,6 +45,60 @@ jobs:
             then
               ghr ${CIRCLE_TAG} bin
             fi
+  build-docker:
+    working_directory: /app
+    environment:
+      IMAGE_NAME: "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}"
+    docker:
+      - image: docker:17.06.0-ce-git
+    steps:
+      - checkout
+      - setup_remote_docker
+      - restore_cache:
+          keys:
+            - v1-{{ .Branch }}
+          paths:
+            - /caches/app.tar
+      - run:
+          name: Load docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i /caches/app.tar | true
+      - run:
+          name: Login to Dockerhub
+          command: |
+            set -u
+            docker login --username "${DOCKER_USER:-$CIRCLE_USERNAME}" --password "${DOCKER_PASS}"
+      - run:
+          name: Fetch or build docker image
+          command: |
+            # If the reponame starts with "docker-", strip that off.
+            # First check to see if the image has already been built,
+            # because Build Binaries Only Once.
+            docker pull "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" \
+            || docker build --cache-from=app --build-arg TAG="$(git describe --tags --abbrev=0)" -t "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" --label circle.sha="${CIRCLE_SHA1}" --label circle.build_num="${CIRCLE_BUILD_NUM}" .
+      - run:
+          name: Save docker image layer cache
+          command: |
+            mkdir -p /caches
+            docker save -o /caches/app.tar "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}"
+      - save_cache:
+          key: v1-{{ .Branch }}-{{ epoch }}
+          paths:
+            - /caches/app.tar
+
+      - run:
+          name: Tag and push to Dockerhub
+          command: |
+            if [ "${CIRCLE_BRANCH}" ]; then
+              docker tag "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_BRANCH}"
+              # git master == docker latest
+              test "master" == "${CIRCLE_BRANCH}" \
+              && docker tag "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:latest"
+            elif [ "${CIRCLE_TAG}" ]; then
+              docker tag "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_TAG}"
+            fi
+            docker push "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}"
 
 workflows:
   version: 2
@@ -54,3 +109,12 @@ workflows:
           filters:
             tags:
               only: /.*/
+      - build-docker:
+          context: github_public_repo
+          requires:
+            - build
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore: /.*/
