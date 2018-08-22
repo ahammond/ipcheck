@@ -9,6 +9,7 @@ jobs:
     working_directory: /go/src/github.com/ahammond/ipcheck
     environment:
       DEP_VERSION: "0.5.0"
+      GHR_VERSION: "0.10.2"
       TEST_RESULTS: /tmp/test-results
     steps:
       - checkout
@@ -20,11 +21,11 @@ jobs:
       - run: mkdir -p $TEST_RESULTS
       - run: go get github.com/jstemmer/go-junit-report
       - run: go get github.com/mitchellh/gox
-      - run: go get github.com/tcnksm/ghr
       - run:
           command: |
+            curl -L -s https://github.com/tcnksm/ghr/releases/download/v${GHR_VERSION}/ghr-linux-amd64 -o $GOPATH/bin/ghr
             curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
-            chmod +x $GOPATH/bin/dep
+            chmod +x $GOPATH/bin/*
             dep ensure
       - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic pkg/* 2>&1 | go-junit-report > $TEST_RESULTS/report.xml
       - run: bash <(curl -s https://codecov.io/bash)
