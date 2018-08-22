@@ -6,9 +6,9 @@ import (
 )
 
 var (
-	Version 	string
-	BuildStamp 	string
-	SHA 		string
+	Version    string
+	BuildStamp string
+	SHA        string
 )
 
 func init() {
