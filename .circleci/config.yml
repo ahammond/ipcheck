@@ -24,7 +24,11 @@ jobs:
       - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic pkg/* 2>&1 | go-junit-report > $TEST_RESULTS/report.xml
       - run: bash <(curl -s https://codecov.io/bash)
       # Skipping on darwin here because... it fails to build and I don't know if anyone cares enough to fix it.
-      - run: gox -os="linux freebsd openbsd" -tags netgo -output "bin/ipcheck_{{.OS}}_{{.Arch}}"
+      - run:
+          command: |
+            BASE="github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/cmd"
+            LDFLAGS="-X $BASE.Version=$(git describe --tags) -X $BASE.BuildStamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ') -X $BASE.SHA=$(git rev-parse HEAD)"
+            gox -os="linux freebsd openbsd" -tags netgo -output "bin/ipcheck_{{.OS}}_{{.Arch}}" -ldflags "$LDFLAGS"
       - save_cache:
           key: v1-pkg-cache
           paths:
