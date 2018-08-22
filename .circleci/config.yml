@@ -8,6 +8,7 @@ jobs:
       - image: circleci/golang:1.9
     working_directory: /go/src/github.com/ahammond/ipcheck
     environment:
+      DEP_VERSION: "0.5.0"
       TEST_RESULTS: /tmp/test-results
     steps:
       - checkout
@@ -20,7 +21,11 @@ jobs:
       - run: go get github.com/jstemmer/go-junit-report
       - run: go get github.com/mitchellh/gox
       - run: go get github.com/tcnksm/ghr
-      - run: go get -v -t -d ./...
+      - run:
+          command: |
+            curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
+            chmod +x $GOPATH/bin/dep
+            dep ensure
       - run: go test -v -race -coverprofile=coverage.txt -covermode=atomic pkg/* 2>&1 | go-junit-report > $TEST_RESULTS/report.xml
       - run: bash <(curl -s https://codecov.io/bash)
       # Skipping on darwin here because... it fails to build and I don't know if anyone cares enough to fix it.
