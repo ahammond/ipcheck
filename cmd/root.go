@@ -38,10 +38,11 @@ func mainRun(cmd *cobra.Command, args []string) {
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "ipcheck",
-	Short: "Given an IP, describe it as either public, private, loopback, multicast, etc.",
-	Long:  ``,
-	Run:   mainRun,
+	Use:     "ipcheck",
+	Short:   "Given an IP, describe it as either public, private, loopback, multicast, etc.",
+	Long:    ``,
+	Version: Version,
+	Run:     mainRun,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
