@@ -33,7 +33,8 @@ jobs:
       # Skipping on darwin here because... it fails to build and I don't know if anyone cares enough to fix it.
       - run:
           command: |
-            BASE="github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/cmd"
+            PROJECT_LC=$(echo "${CIRCLE_PROJECT_USERNAME}" | tr '[:upper:]' '[:lower:]')
+            BASE="github.com/${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME}/cmd"
             LDFLAGS="-X $BASE.Version=$(git describe --tags) -X $BASE.BuildStamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ') -X $BASE.SHA=$(git rev-parse HEAD)"
             gox -os="linux freebsd openbsd" -tags netgo -output "bin/ipcheck_{{.OS}}_{{.Arch}}" -ldflags "$LDFLAGS"
       - save_cache:
@@ -58,8 +59,6 @@ jobs:
             fi
   build-docker:
     working_directory: /app
-    environment:
-      IMAGE_NAME: "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}"
     docker:
       - image: docker:17.06.0-ce-git
     steps:
@@ -85,13 +84,15 @@ jobs:
           command: |
             # First check to see if the image has already been built,
             # because Build Binaries Only Once.
-            docker pull "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" \
-            || docker build --cache-from=app --build-arg TAG="$(git describe --tags --abbrev=0)" -t "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" --label circle.sha="${CIRCLE_SHA1}" --label circle.build_num="${CIRCLE_BUILD_NUM}" .
+            PROJECT_LC=$(echo "${CIRCLE_PROJECT_USERNAME}" | tr '[:upper:]' '[:lower:]')
+            docker pull "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" \
+            || docker build --cache-from=app --build-arg TAG="$(git describe --tags --abbrev=0)" -t "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" --label circle.sha="${CIRCLE_SHA1}" --label circle.build_num="${CIRCLE_BUILD_NUM}" .
       - run:
           name: Save docker image layer cache
           command: |
             mkdir -p /caches
-            docker save -o /caches/app.tar "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}"
+            PROJECT_LC=$(echo "${CIRCLE_PROJECT_USERNAME}" | tr '[:upper:]' '[:lower:]')
+            docker save -o /caches/app.tar "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}"
       - save_cache:
           key: v1-{{ .Branch }}-{{ epoch }}
           paths:
@@ -100,15 +101,16 @@ jobs:
       - run:
           name: Tag and push to Dockerhub
           command: |
+            PROJECT_LC=$(echo "${CIRCLE_PROJECT_USERNAME}" | tr '[:upper:]' '[:lower:]')
             if [ "${CIRCLE_BRANCH}" ]; then
-              docker tag "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}"
+              docker tag "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}"
               # git master == docker latest
               test "master" == "${CIRCLE_BRANCH}" \
-              && docker tag "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:latest"
+              && docker tag "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME}:latest"
             elif [ "${CIRCLE_TAG}" ]; then
-              docker tag "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG}"
+              docker tag "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG}"
             fi
-            docker push "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
+            docker push "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME}"
 
 workflows:
   version: 2
