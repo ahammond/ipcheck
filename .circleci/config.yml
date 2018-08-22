@@ -52,7 +52,7 @@ jobs:
   build-docker:
     working_directory: /app
     environment:
-      IMAGE_NAME: "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}"
+      IMAGE_NAME: "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}"
     docker:
       - image: docker:17.06.0-ce-git
     steps:
@@ -76,16 +76,15 @@ jobs:
       - run:
           name: Fetch or build docker image
           command: |
-            # If the reponame starts with "docker-", strip that off.
             # First check to see if the image has already been built,
             # because Build Binaries Only Once.
-            docker pull "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" \
-            || docker build --cache-from=app --build-arg TAG="$(git describe --tags --abbrev=0)" -t "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" --label circle.sha="${CIRCLE_SHA1}" --label circle.build_num="${CIRCLE_BUILD_NUM}" .
+            docker pull "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" \
+            || docker build --cache-from=app --build-arg TAG="$(git describe --tags --abbrev=0)" -t "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" --label circle.sha="${CIRCLE_SHA1}" --label circle.build_num="${CIRCLE_BUILD_NUM}" .
       - run:
           name: Save docker image layer cache
           command: |
             mkdir -p /caches
-            docker save -o /caches/app.tar "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}"
+            docker save -o /caches/app.tar "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}"
       - save_cache:
           key: v1-{{ .Branch }}-{{ epoch }}
           paths:
@@ -95,14 +94,14 @@ jobs:
           name: Tag and push to Dockerhub
           command: |
             if [ "${CIRCLE_BRANCH}" ]; then
-              docker tag "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_BRANCH}"
+              docker tag "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_BRANCH}"
               # git master == docker latest
               test "master" == "${CIRCLE_BRANCH}" \
-              && docker tag "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:latest"
+              && docker tag "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:latest"
             elif [ "${CIRCLE_TAG}" ]; then
-              docker tag "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_TAG}"
+              docker tag "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_SHA1}" "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG}"
             fi
-            docker push "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}"
+            docker push "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
 
 workflows:
   version: 2
