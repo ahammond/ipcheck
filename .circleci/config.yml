@@ -74,8 +74,7 @@ jobs:
       - run:
           name: Load docker image layer cache
           command: |
-            set +o pipefail
-            docker load -i /caches/app.tar | true
+            docker load -i /caches/app.tar 2>&1 || true
       - run:
           name: Login to Dockerhub
           command: |
